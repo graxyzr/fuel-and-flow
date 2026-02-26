@@ -11,12 +11,26 @@ export interface WorkoutData {
         playlist: string;
         icon: string;
         color: string;
+        songs?: string[];
     };
     color: string;
+    exercises?: string[];
+    duration?: number;
+    calories?: number;
 }
 
 export interface WeeklyProgress {
     day: string;
     completed: boolean;
     type: WorkoutType | null;
+    notes?: string;
+    rating?: number;
+}
+
+export interface UserStats {
+    totalWorkouts: number;
+    currentStreak: number;
+    bestStreak: number;
+    totalCalories: number;
+    favoriteWorkout: WorkoutType;
 }
