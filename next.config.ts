@@ -1,8 +1,9 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  /* config options here */
-  reactCompiler: true,
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: 'standalone', // Importante para Vercel
+  images: {
+    unoptimized: true, // Se estiver usando imagens locais
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
