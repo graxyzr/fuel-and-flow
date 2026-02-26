@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { WorkoutSelector } from './components/workout-selector';
 import { EnergyCard } from './components/energy-card';
 import { NutritionCard } from './components/nutrition-card';
@@ -15,7 +15,9 @@ export default function Home() {
   const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>([]);
   const [streak, setStreak] = useState(0);
 
-  // 🔹 CORREÇÃO: Declarar calculateStreak PRIMEIRO com useCallback
+  // 🔹 IMPORTANTE: Ref para evitar loops infinitos
+  const initializedRef = useRef(false);
+
   const calculateStreak = useCallback((progress: WeeklyProgress[]) => {
     let currentStreak = 0;
     for (let i = progress.length - 1; i >= 0; i--) {
@@ -25,8 +27,11 @@ export default function Home() {
     setStreak(currentStreak);
   }, []);
 
-  // Inicializar dados de progresso
+  // 🔹 CORREÇÃO: useEffect com condicional para executar apenas UMA vez
   useEffect(() => {
+    // Evitar executar múltiplas vezes
+    if (initializedRef.current) return;
+
     const today = new Date().getDay();
     const adjustedToday = today === 0 ? 6 : today - 1;
 
@@ -39,9 +44,11 @@ export default function Home() {
             index === 3 ? 'rest' :
               index === 4 ? 'cardio' : null
     }));
+
     setWeeklyProgress(mockProgress);
     calculateStreak(mockProgress);
-  }, [calculateStreak]);
+    initializedRef.current = true;
+  }, [calculateStreak]); // Dependência ainda necessária
 
   const handleSelectWorkout = (workout: WorkoutType) => {
     setSelectedWorkout(workout);
