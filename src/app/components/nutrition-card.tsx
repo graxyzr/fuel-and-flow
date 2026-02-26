@@ -2,162 +2,221 @@
 
 import { WorkoutType } from './types';
 import { workoutConfig } from './constants';
-import { Utensils, Sunrise, Sunset, Plus, Check, Coffee, Apple, Droplet } from 'lucide-react';
+import { Utensils, Sunrise, Sunset, Plus, Check, Droplet } from 'lucide-react';
 import { useState } from 'react';
 
 interface NutritionCardProps {
     workout: WorkoutType;
 }
 
+const colorMap: Record<string, string> = {
+    red: '#ef4444',
+    blue: '#3b82f6',
+    green: '#22c55e',
+    purple: '#a855f7',
+    yellow: '#eab308',
+};
+
 export function NutritionCard({ workout }: NutritionCardProps) {
     const data = workoutConfig[workout];
+    const color = colorMap[data.color as keyof typeof colorMap] ?? '#a855f7';
     const [preChecked, setPreChecked] = useState(false);
     const [postChecked, setPostChecked] = useState(false);
-    const [showWaterTracker, setShowWaterTracker] = useState(false);
+    const [showWater, setShowWater] = useState(false);
     const [waterIntake, setWaterIntake] = useState(0);
-    const waterGoal = 2000; // ml
+    const waterGoal = 2000;
+    const waterPct = (waterIntake / waterGoal) * 100;
+    const mealPct = (preChecked ? 50 : 0) + (postChecked ? 50 : 0);
 
-    const colorMap = {
-        red: '#ef4444',
-        blue: '#3b82f6',
-        green: '#22c55e',
-        purple: '#a855f7',
-        yellow: '#eab308',
-    };
-    const colorValue = colorMap[data.color as keyof typeof colorMap] || '#ffffff';
-
-    const handleAddWater = () => {
-        setWaterIntake(prev => Math.min(prev + 250, waterGoal));
-    };
-
-    const waterPercentage = (waterIntake / waterGoal) * 100;
+    const handleAddWater = () => setWaterIntake(p => Math.min(p + 250, waterGoal));
 
     return (
-        <div className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-white/10 p-6 hover:border-white/20 transition-all">
-            <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    <div
-                        className="p-3 rounded-lg transition-all"
-                        style={{ background: `${colorValue}20` }}
-                    >
-                        <Utensils className="w-5 h-5" style={{ color: colorValue }} />
+        <div
+            className="card card-hover-effect"
+            style={{ transition: 'all 0.3s cubic-bezier(0.23,1,0.32,1)' }}
+        >
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{
+                        padding: '0.65rem',
+                        borderRadius: '12px',
+                        background: `linear-gradient(135deg, ${color}20, ${color}35)`,
+                        border: `1px solid ${color}25`,
+                    }}>
+                        <Utensils style={{ width: '1.125rem', height: '1.125rem', color }} />
                     </div>
-                    <h3 className="text-lg font-semibold text-white">Fuel</h3>
+                    <div>
+                        <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-muted)', marginBottom: '0.15rem' }}>
+                            Nutrição
+                        </p>
+                        <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>Fuel</p>
+                    </div>
                 </div>
 
-                {/* Botão do tracker de água */}
+                {/* Water toggle */}
                 <button
-                    onClick={() => setShowWaterTracker(!showWaterTracker)}
-                    className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                    onClick={() => setShowWater(v => !v)}
+                    style={{
+                        padding: '0.4rem',
+                        borderRadius: '8px',
+                        background: showWater ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${showWater ? 'rgba(59,130,246,0.35)' : 'rgba(255,255,255,0.07)'}`,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                    }}
+                    title="Hidratação"
                 >
-                    <Droplet className="w-4 h-4 text-blue-400" />
+                    <Droplet style={{ width: '1rem', height: '1rem', color: showWater ? '#3b82f6' : 'rgba(255,255,255,0.4)' }} />
                 </button>
             </div>
 
-            {!showWaterTracker ? (
+            {/* ── MEALS VIEW ── */}
+            {!showWater ? (
                 <>
-                    <div className="space-y-4">
-                        {/* Pré-treino com checkbox */}
-                        <div className="flex items-start gap-3">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
+                        {/* Pré */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                             <button
-                                onClick={() => setPreChecked(!preChecked)}
-                                className={`
-                  mt-1 w-5 h-5 rounded flex items-center justify-center transition-all
-                  ${preChecked ? 'bg-green-500' : 'bg-white/5 border border-white/10'}
-                `}
+                                onClick={() => setPreChecked(v => !v)}
+                                style={{
+                                    marginTop: '0.2rem',
+                                    width: '1.2rem', height: '1.2rem',
+                                    borderRadius: '5px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    background: preChecked ? 'var(--rest)' : 'rgba(255,255,255,0.05)',
+                                    border: `1px solid ${preChecked ? 'var(--rest)' : 'rgba(255,255,255,0.12)'}`,
+                                    boxShadow: preChecked ? '0 0 10px var(--rest-glow)' : 'none',
+                                    transition: 'all 0.2s',
+                                }}
                             >
-                                {preChecked && <Check className="w-3 h-3 text-white" />}
+                                {preChecked && <Check style={{ width: '0.65rem', height: '0.65rem', color: '#fff' }} />}
                             </button>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <Sunrise className="w-4 h-4" style={{ color: colorValue }} />
-                                    <p className="text-sm text-zinc-400">Pré-treino</p>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                                    <Sunrise style={{ width: '0.875rem', height: '0.875rem', color }} />
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--fg-muted)' }}>Pré-treino</span>
                                 </div>
-                                <p className={`text-white font-medium transition-all ${preChecked ? 'line-through text-zinc-500' : ''}`}>
+                                <p style={{
+                                    fontSize: '0.875rem', fontWeight: 500, color: preChecked ? 'var(--fg-muted)' : '#fff',
+                                    textDecoration: preChecked ? 'line-through' : 'none',
+                                    transition: 'all 0.25s',
+                                }}>
                                     {data.preWorkout}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Pós-treino com checkbox */}
-                        <div className="flex items-start gap-3">
+                        {/* Divider */}
+                        <hr className="divider" style={{ margin: '0' }} />
+
+                        {/* Pós */}
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
                             <button
-                                onClick={() => setPostChecked(!postChecked)}
-                                className={`
-                  mt-1 w-5 h-5 rounded flex items-center justify-center transition-all
-                  ${postChecked ? 'bg-green-500' : 'bg-white/5 border border-white/10'}
-                `}
+                                onClick={() => setPostChecked(v => !v)}
+                                style={{
+                                    marginTop: '0.2rem',
+                                    width: '1.2rem', height: '1.2rem',
+                                    borderRadius: '5px',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    background: postChecked ? 'var(--rest)' : 'rgba(255,255,255,0.05)',
+                                    border: `1px solid ${postChecked ? 'var(--rest)' : 'rgba(255,255,255,0.12)'}`,
+                                    boxShadow: postChecked ? '0 0 10px var(--rest-glow)' : 'none',
+                                    transition: 'all 0.2s',
+                                }}
                             >
-                                {postChecked && <Check className="w-3 h-3 text-white" />}
+                                {postChecked && <Check style={{ width: '0.65rem', height: '0.65rem', color: '#fff' }} />}
                             </button>
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <Sunset className="w-4 h-4" style={{ color: colorValue }} />
-                                    <p className="text-sm text-zinc-400">Pós-treino</p>
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                                    <Sunset style={{ width: '0.875rem', height: '0.875rem', color }} />
+                                    <span style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--fg-muted)' }}>Pós-treino</span>
                                 </div>
-                                <p className={`text-white font-medium transition-all ${postChecked ? 'line-through text-zinc-500' : ''}`}>
+                                <p style={{
+                                    fontSize: '0.875rem', fontWeight: 500, color: postChecked ? 'var(--fg-muted)' : '#fff',
+                                    textDecoration: postChecked ? 'line-through' : 'none',
+                                    transition: 'all 0.25s',
+                                }}>
                                     {data.postWorkout}
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Progresso das refeições */}
-                    <div className="mt-4 pt-4 border-t border-white/10">
-                        <div className="flex items-center justify-between text-xs text-zinc-400">
-                            <span>Progresso do dia</span>
-                            <span>{preChecked && postChecked ? '100%' : preChecked || postChecked ? '50%' : '0%'}</span>
+                    {/* Meal progress */}
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--fg-muted)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Progresso do dia</span>
+                            <span style={{ fontSize: '0.7rem', fontWeight: 700, color }}>{mealPct}%</span>
                         </div>
-                        <div className="h-1 bg-white/5 rounded-full mt-1">
+                        <div className="energy-bar">
                             <div
-                                className="h-full rounded-full transition-all duration-300"
+                                className="energy-bar-fill"
                                 style={{
-                                    width: `${(preChecked ? 50 : 0) + (postChecked ? 50 : 0)}%`,
-                                    background: `linear-gradient(to right, ${colorValue}, ${colorValue}dd)`
+                                    width: `${mealPct}%`,
+                                    background: `linear-gradient(90deg, ${color}80, ${color})`,
+                                    transition: 'width 0.5s cubic-bezier(0.23,1,0.32,1)',
                                 }}
                             />
                         </div>
                     </div>
                 </>
             ) : (
-                /* Tracker de água */
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                            <Coffee className="w-4 h-4 text-blue-400" />
-                            <span className="text-sm text-zinc-300">Hidratação</span>
+                /* ── WATER VIEW ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Droplet style={{ width: '0.875rem', height: '0.875rem', color: '#3b82f6' }} />
+                            <span style={{ fontSize: '0.8125rem', color: 'var(--fg-secondary)', fontWeight: 500 }}>Hidratação</span>
                         </div>
-                        <span className="text-sm text-white">{waterIntake}ml / {waterGoal}ml</span>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: waterPct >= 100 ? 'var(--rest)' : '#3b82f6', fontVariantNumeric: 'tabular-nums' }}>
+                            {waterIntake}ml / {waterGoal}ml
+                        </span>
                     </div>
 
-                    {/* Barra de progresso da água */}
-                    <div className="h-2 bg-blue-500/10 rounded-full overflow-hidden">
+                    <div className="energy-bar energy-bar-animated">
                         <div
-                            className="h-full bg-blue-500 transition-all duration-300"
-                            style={{ width: `${waterPercentage}%` }}
+                            className="energy-bar-fill energy-bar-fill-pull"
+                            style={{ width: `${waterPct}%`, transition: 'width 0.5s cubic-bezier(0.23,1,0.32,1)' }}
                         />
                     </div>
 
-                    {/* Botões para adicionar água */}
-                    <div className="grid grid-cols-4 gap-2">
-                        {[1, 2, 3, 4].map((i) => (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+                        {[1, 2, 3, 4].map(i => (
                             <button
                                 key={i}
                                 onClick={handleAddWater}
-                                className="p-2 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition-colors text-center"
                                 disabled={waterIntake >= waterGoal}
+                                style={{
+                                    padding: '0.5rem 0.25rem',
+                                    borderRadius: '10px',
+                                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.2rem',
+                                    background: 'rgba(59,130,246,0.08)',
+                                    border: '1px solid rgba(59,130,246,0.2)',
+                                    cursor: waterIntake >= waterGoal ? 'not-allowed' : 'pointer',
+                                    opacity: waterIntake >= waterGoal ? 0.4 : 1,
+                                    transition: 'all 0.2s',
+                                }}
+                                onMouseEnter={e => { if (waterIntake < waterGoal) (e.currentTarget as HTMLElement).style.background = 'rgba(59,130,246,0.18)'; }}
+                                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(59,130,246,0.08)'; }}
                             >
-                                <Plus className="w-3 h-3 mx-auto text-blue-400" />
-                                <span className="text-xs text-blue-400">250ml</span>
+                                <Plus style={{ width: '0.75rem', height: '0.75rem', color: '#3b82f6' }} />
+                                <span style={{ fontSize: '0.65rem', color: '#3b82f6', fontWeight: 600 }}>250ml</span>
                             </button>
                         ))}
                     </div>
 
                     <button
-                        onClick={() => setShowWaterTracker(false)}
-                        className="text-xs text-zinc-500 hover:text-zinc-400 transition-colors"
+                        onClick={() => setShowWater(false)}
+                        style={{ fontSize: '0.75rem', color: 'var(--fg-muted)', cursor: 'pointer', background: 'none', border: 'none', textAlign: 'left', transition: 'color 0.2s' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--fg-secondary)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--fg-muted)'; }}
                     >
-                        ← Voltar para refeições
+                        ← Ver refeições
                     </button>
                 </div>
             )}

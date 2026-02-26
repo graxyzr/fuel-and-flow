@@ -9,7 +9,7 @@ interface EnergyCardProps {
     workout: WorkoutType;
 }
 
-const colorMap = {
+const colorMap: Record<string, string> = {
     red: '#ef4444',
     blue: '#3b82f6',
     green: '#22c55e',
@@ -20,57 +20,74 @@ const colorMap = {
 export function EnergyCard({ workout }: EnergyCardProps) {
     const data = workoutConfig[workout];
     const percentage = (data.energyLevel / 10) * 100;
-    const colorValue = colorMap[data.color as keyof typeof colorMap];
+    const color = colorMap[data.color as keyof typeof colorMap] ?? '#a855f7';
     const [isHovered, setIsHovered] = useState(false);
 
     return (
         <div
-            className="bg-zinc-900/50 backdrop-blur-sm rounded-xl border border-white/10 p-6 hover:border-white/20 transition-all hover:scale-105 duration-300 cursor-pointer"
+            className="card card-hover-effect"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
+            style={{
+                borderColor: isHovered ? `${color}35` : undefined,
+                boxShadow: isHovered ? `0 8px 32px ${color}30, 0 2px 8px rgba(0,0,0,0.4)` : undefined,
+                transition: 'all 0.3s cubic-bezier(0.23,1,0.32,1)',
+            }}
         >
-            <div className="flex items-center gap-3 mb-4">
+            {/* Header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                 <div
-                    className="p-3 rounded-lg transition-all duration-300"
                     style={{
-                        background: `linear-gradient(to bottom right, ${colorValue}20, ${colorValue}40)`,
-                        transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                        padding: '0.65rem',
+                        borderRadius: '12px',
+                        background: `linear-gradient(135deg, ${color}20, ${color}35)`,
+                        border: `1px solid ${color}25`,
+                        transform: isHovered ? 'scale(1.1) rotate(-6deg)' : 'scale(1)',
+                        transition: 'transform 0.3s cubic-bezier(0.34,1.56,0.64,1)',
+                        boxShadow: isHovered ? `0 0 16px ${color}40` : 'none',
                     }}
                 >
-                    <Zap className="w-5 h-5" style={{ color: colorValue }} />
+                    <Zap style={{ width: '1.125rem', height: '1.125rem', color }} />
                 </div>
                 <div>
-                    <h3 className="text-sm font-medium text-zinc-400">Status de Energia</h3>
-                    <p className="text-2xl font-bold text-white">{data.energyLabel}</p>
+                    <p style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--fg-muted)', marginBottom: '0.2rem' }}>
+                        Status de Energia
+                    </p>
+                    <p style={{ fontSize: '1.375rem', fontWeight: 700, color: '#ffffff', lineHeight: 1.1 }}>
+                        {data.energyLabel}
+                    </p>
                 </div>
             </div>
 
-            <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                    <span className="text-zinc-400">Nível de Esforço</span>
-                    <span className="font-medium" style={{ color: colorValue }}>
-                        {data.energyLevel}/10
-                    </span>
-                </div>
+            {/* Level row */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--fg-secondary)' }}>Nível de Esforço</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color, fontVariantNumeric: 'tabular-nums' }}>
+                    {data.energyLevel}/10
+                </span>
+            </div>
 
-                <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{
-                            width: `${percentage}%`,
-                            backgroundColor: colorValue
-                        }}
-                    />
-                </div>
+            {/* Energy bar */}
+            <div className="energy-bar energy-bar-animated" style={{ marginBottom: '1rem' }}>
+                <div
+                    className="energy-bar-fill"
+                    style={{
+                        width: `${percentage}%`,
+                        background: `linear-gradient(90deg, ${color}80, ${color})`,
+                        transition: 'width 0.8s cubic-bezier(0.23,1,0.32,1)',
+                    }}
+                />
+            </div>
 
-                <div className="flex items-center gap-2 mt-4 text-sm text-zinc-400">
-                    {isHovered ? (
-                        <TrendingUp className="w-4 h-4 animate-pulse" />
-                    ) : (
-                        <Activity className="w-4 h-4" />
-                    )}
-                    <span>Preparado para {data.name.toLowerCase()}</span>
-                </div>
+            {/* Footer */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {isHovered
+                    ? <TrendingUp style={{ width: '0.875rem', height: '0.875rem', color, animation: 'pulse-soft 1s ease infinite' }} />
+                    : <Activity style={{ width: '0.875rem', height: '0.875rem', color: 'var(--fg-muted)' }} />
+                }
+                <span style={{ fontSize: '0.75rem', color: 'var(--fg-muted)' }}>
+                    Preparado para {data.name.toLowerCase()}
+                </span>
             </div>
         </div>
     );
