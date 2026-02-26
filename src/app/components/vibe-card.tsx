@@ -3,7 +3,7 @@
 import { WorkoutType } from './types';
 import { workoutConfig } from './constants';
 import { Music, Play, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface VibeCardProps {
     workout: WorkoutType;
@@ -33,9 +33,80 @@ export function VibeCard({ workout }: VibeCardProps) {
     const [volume, setVolume] = useState(70);
     const [showPlaylist, setShowPlaylist] = useState(false);
 
-    const songs = data.vibe.songs || ['Track 1 - Artist', 'Track 2 - Artist', 'Track 3 - Artist'];
+    // 🔹 CORREÇÃO 1: useMemo para memoizar songs
+    const songs = useMemo(() =>
+        data.vibe.songs || ['Track 1 - Artist', 'Track 2 - Artist', 'Track 3 - Artist'],
+        [data.vibe.songs]
+    );
 
-    useEffect(() => { setSongIndex(0); setIsPlaying(false); }, [workout]);
+    // 🔹 CORREÇÃO 2: useEffect separado para resetar quando workout muda
+    useEffect(() => {
+        setSongIndex(0);
+        setIsPlaying(false);
+    }, [workout]);
+
+    // 🔹 CORREÇÃO 3: useCallback para funções de manipulação
+    const handlePlayPause = useCallback(() => {
+        setIsPlaying(prev => !prev);
+    }, []);
+
+    const handlePrevSong = useCallback(() => {
+        setSongIndex(prev => (prev - 1 + songs.length) % songs.length);
+    }, [songs.length]);
+
+    const handleNextSong = useCallback(() => {
+        setSongIndex(prev => (prev + 1) % songs.length);
+    }, [songs.length]);
+
+    const handleVolumeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setVolume(Number(e.target.value));
+    }, []);
+
+    const handleSelectSong = useCallback((index: number) => {
+        setSongIndex(index);
+        setIsPlaying(true);
+    }, []);
+
+    const togglePlaylist = useCallback(() => {
+        setShowPlaylist(prev => !prev);
+    }, []);
+
+    // 🔹 CORREÇÃO 4: Event handlers com useCallback para elementos interativos
+    const handleButtonHover = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        (e.currentTarget as HTMLElement).style.transform = 'scale(1.12)';
+    }, []);
+
+    const handleButtonLeave = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        (e.currentTarget as HTMLElement).style.transform = 'scale(1)';
+    }, []);
+
+    const handleIconMouseEnter = useCallback((e: React.MouseEvent<SVGElement>) => {
+        (e.currentTarget as SVGElement).style.color = '#fff';
+    }, []);
+
+    const handleIconMouseLeave = useCallback((e: React.MouseEvent<SVGElement>) => {
+        (e.currentTarget as SVGElement).style.color = 'rgba(255,255,255,0.5)';
+    }, []);
+
+    const handlePlaylistItemHover = useCallback((e: React.MouseEvent<HTMLElement>, isCurrentSong: boolean) => {
+        if (!isCurrentSong) {
+            (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.25)';
+        }
+    }, []);
+
+    const handlePlaylistItemLeave = useCallback((e: React.MouseEvent<HTMLElement>, isCurrentSong: boolean) => {
+        if (!isCurrentSong) {
+            (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.15)';
+        }
+    }, []);
+
+    const handleTextMouseEnter = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)';
+    }, []);
+
+    const handleTextMouseLeave = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.35)';
+    }, []);
 
     return (
         <div
@@ -93,7 +164,7 @@ export function VibeCard({ workout }: VibeCardProps) {
                     </div>
 
                     <button
-                        onClick={() => setShowPlaylist(v => !v)}
+                        onClick={togglePlaylist}
                         style={{
                             fontSize: '1.5rem', cursor: 'pointer', background: 'none', border: 'none',
                             transition: 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)',
@@ -125,7 +196,7 @@ export function VibeCard({ workout }: VibeCardProps) {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', marginBottom: '0.75rem' }}>
                                 {/* Play/Pause button */}
                                 <button
-                                    onClick={() => setIsPlaying(v => !v)}
+                                    onClick={handlePlayPause}
                                     style={{
                                         width: '2rem', height: '2rem',
                                         borderRadius: '50%',
@@ -135,8 +206,8 @@ export function VibeCard({ workout }: VibeCardProps) {
                                         boxShadow: `0 0 14px ${color}60`,
                                         transition: 'transform 0.2s cubic-bezier(0.34,1.56,0.64,1)',
                                     }}
-                                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.12)'; }}
-                                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1)'; }}
+                                    onMouseEnter={handleButtonHover}
+                                    onMouseLeave={handleButtonLeave}
                                 >
                                     {isPlaying
                                         ? <Pause style={{ width: '0.875rem', height: '0.875rem', color: '#fff' }} />
@@ -167,16 +238,16 @@ export function VibeCard({ workout }: VibeCardProps) {
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                                 <div style={{ display: 'flex', gap: '0.75rem' }}>
                                     <SkipBack
-                                        onClick={() => setSongIndex(p => (p - 1 + songs.length) % songs.length)}
+                                        onClick={handlePrevSong}
                                         style={{ width: '1rem', height: '1rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'color 0.2s' }}
-                                        onMouseEnter={e => { (e.currentTarget as SVGElement).style.color = '#fff'; }}
-                                        onMouseLeave={e => { (e.currentTarget as SVGElement).style.color = 'rgba(255,255,255,0.5)'; }}
+                                        onMouseEnter={handleIconMouseEnter}
+                                        onMouseLeave={handleIconMouseLeave}
                                     />
                                     <SkipForward
-                                        onClick={() => setSongIndex(p => (p + 1) % songs.length)}
+                                        onClick={handleNextSong}
                                         style={{ width: '1rem', height: '1rem', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', transition: 'color 0.2s' }}
-                                        onMouseEnter={e => { (e.currentTarget as SVGElement).style.color = '#fff'; }}
-                                        onMouseLeave={e => { (e.currentTarget as SVGElement).style.color = 'rgba(255,255,255,0.5)'; }}
+                                        onMouseEnter={handleIconMouseEnter}
+                                        onMouseLeave={handleIconMouseLeave}
                                     />
                                 </div>
 
@@ -185,7 +256,7 @@ export function VibeCard({ workout }: VibeCardProps) {
                                     <Volume2 style={{ width: '0.75rem', height: '0.75rem', color: 'rgba(255,255,255,0.3)' }} />
                                     <input
                                         type="range" min="0" max="100" value={volume}
-                                        onChange={e => setVolume(Number(e.target.value))}
+                                        onChange={handleVolumeChange}
                                         style={{
                                             width: '4rem',
                                             background: `linear-gradient(to right, ${color} ${volume}%, rgba(255,255,255,0.15) ${volume}%)`,
@@ -204,7 +275,7 @@ export function VibeCard({ workout }: VibeCardProps) {
                         {songs.map((song, i) => (
                             <div
                                 key={i}
-                                onClick={() => { setSongIndex(i); setIsPlaying(true); }}
+                                onClick={() => handleSelectSong(i)}
                                 style={{
                                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                                     padding: '0.5rem 0.625rem',
@@ -214,8 +285,8 @@ export function VibeCard({ workout }: VibeCardProps) {
                                     border: `1px solid ${i === songIndex ? color + '35' : 'transparent'}`,
                                     transition: 'all 0.2s',
                                 }}
-                                onMouseEnter={e => { if (i !== songIndex) (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.25)'; }}
-                                onMouseLeave={e => { if (i !== songIndex) (e.currentTarget as HTMLElement).style.background = 'rgba(0,0,0,0.15)'; }}
+                                onMouseEnter={(e) => handlePlaylistItemHover(e, i === songIndex)}
+                                onMouseLeave={(e) => handlePlaylistItemLeave(e, i === songIndex)}
                             >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     {i === songIndex && isPlaying
@@ -235,14 +306,14 @@ export function VibeCard({ workout }: VibeCardProps) {
                 )}
 
                 <button
-                    onClick={() => setShowPlaylist(v => !v)}
+                    onClick={togglePlaylist}
                     style={{
                         marginTop: '0.875rem', fontSize: '0.7rem',
                         color: 'rgba(255,255,255,0.35)', cursor: 'pointer',
                         background: 'none', border: 'none', transition: 'color 0.2s',
                     }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.6)'; }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.35)'; }}
+                    onMouseEnter={handleTextMouseEnter}
+                    onMouseLeave={handleTextMouseLeave}
                 >
                     {showPlaylist ? '⇧ Ver player' : '⇩ Ver playlist completa'}
                 </button>
