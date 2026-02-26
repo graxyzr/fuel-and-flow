@@ -3,7 +3,7 @@
 import { WorkoutType } from './types';
 import { workoutConfig } from './constants';
 import { Music, Play, Pause, SkipForward, SkipBack, Volume2 } from 'lucide-react';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 
 interface VibeCardProps {
     workout: WorkoutType;
@@ -33,19 +33,23 @@ export function VibeCard({ workout }: VibeCardProps) {
     const [volume, setVolume] = useState(70);
     const [showPlaylist, setShowPlaylist] = useState(false);
 
-    // 🔹 CORREÇÃO 1: useMemo para memoizar songs
+    // Ref para rastrear o workout anterior
+    const prevWorkoutRef = useRef<WorkoutType>(workout);
+
     const songs = useMemo(() =>
         data.vibe.songs || ['Track 1 - Artist', 'Track 2 - Artist', 'Track 3 - Artist'],
         [data.vibe.songs]
     );
 
-    // 🔹 CORREÇÃO 2: useEffect separado para resetar quando workout muda
+    // useEffect corrigido - sem setState direto problemático
     useEffect(() => {
-        setSongIndex(0);
-        setIsPlaying(false);
+        if (prevWorkoutRef.current !== workout) {
+            setSongIndex(0);
+            setIsPlaying(false);
+            prevWorkoutRef.current = workout;
+        }
     }, [workout]);
 
-    // 🔹 CORREÇÃO 3: useCallback para funções de manipulação
     const handlePlayPause = useCallback(() => {
         setIsPlaying(prev => !prev);
     }, []);
@@ -71,7 +75,6 @@ export function VibeCard({ workout }: VibeCardProps) {
         setShowPlaylist(prev => !prev);
     }, []);
 
-    // 🔹 CORREÇÃO 4: Event handlers com useCallback para elementos interativos
     const handleButtonHover = useCallback((e: React.MouseEvent<HTMLElement>) => {
         (e.currentTarget as HTMLElement).style.transform = 'scale(1.12)';
     }, []);
