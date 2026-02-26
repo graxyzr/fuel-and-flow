@@ -1,63 +1,209 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { WorkoutSelector } from './components/workout-selector';
+import { EnergyCard } from './components/energy-card';
+import { NutritionCard } from './components/nutrition-card';
+import { VibeCard } from './components/vibe-card';
+import { ProgressCard } from './components/progress-card';
+import { WorkoutType, WeeklyProgress } from './components/types';
+import { workoutConfig, weekDays } from './components/constants';
+import { Flame, Moon, Trophy, Calendar } from 'lucide-react';
 
 export default function Home() {
+  const [selectedWorkout, setSelectedWorkout] = useState<WorkoutType>('push');
+  const [weeklyProgress, setWeeklyProgress] = useState<WeeklyProgress[]>([]);
+  const [streak, setStreak] = useState(0);
+
+  // Inicializar dados de progresso
+  useEffect(() => {
+    const today = new Date().getDay();
+    const adjustedToday = today === 0 ? 6 : today - 1;
+
+    const mockProgress: WeeklyProgress[] = weekDays.map((day, index) => ({
+      day,
+      completed: index < adjustedToday, // Dias anteriores completos
+      type: index === 0 ? 'push' :
+        index === 1 ? 'pull' :
+          index === 2 ? 'legs' :
+            index === 3 ? 'rest' :
+              index === 4 ? 'cardio' : null
+    }));
+    setWeeklyProgress(mockProgress);
+
+    // Calcular streak
+    calculateStreak(mockProgress);
+  }, []);
+
+  // Calcular streak de treinos
+  const calculateStreak = (progress: WeeklyProgress[]) => {
+    let currentStreak = 0;
+    for (let i = progress.length - 1; i >= 0; i--) {
+      if (progress[i].completed) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+    setStreak(currentStreak);
+  };
+
+  // Selecionar treino
+  const handleSelectWorkout = (workout: WorkoutType) => {
+    setSelectedWorkout(workout);
+
+    // Atualizar o treino do dia atual
+    const today = new Date().getDay();
+    const adjustedToday = today === 0 ? 6 : today - 1;
+
+    setWeeklyProgress(prev => {
+      const newProgress = prev.map((day, index) =>
+        index === adjustedToday
+          ? { ...day, type: workout }
+          : day
+      );
+      return newProgress;
+    });
+  };
+
+  // Marcar/desmarcar dia como completo
+  const handleToggleDay = (index: number) => {
+    setWeeklyProgress(prev => {
+      const newProgress = prev.map((day, i) =>
+        i === index
+          ? { ...day, completed: !day.completed }
+          : day
+      );
+
+      // Recalcular streak
+      calculateStreak(newProgress);
+
+      return newProgress;
+    });
+  };
+
+  // Resetar progresso semanal
+  const handleResetWeek = () => {
+    if (confirm('Tem certeza que deseja resetar o progresso da semana?')) {
+      setWeeklyProgress(prev =>
+        prev.map(day => ({ ...day, completed: false }))
+      );
+      setStreak(0);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950">
+      {/* Header */}
+      <header className="border-b border-white/10 bg-black/20 backdrop-blur-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Flame className="w-8 h-8 text-orange-500" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
+                Fuel & Flow
+              </h1>
+            </div>
+
+            <div className="flex items-center gap-6">
+              {/* Streak */}
+              <div className="flex items-center gap-2 bg-zinc-800/50 px-3 py-1 rounded-full">
+                <Trophy className="w-4 h-4 text-yellow-500" />
+                <span className="text-sm text-white">{streak} dias seguidos</span>
+              </div>
+
+              {/* Dark mode indicator */}
+              <div className="flex items-center gap-2 text-zinc-400">
+                <Moon className="w-5 h-5" />
+                <span className="text-sm hidden sm:inline">Dark Mode</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="space-y-8">
+          {/* Data atual */}
+          <div className="flex items-center gap-2 text-zinc-400">
+            <Calendar className="w-4 h-4" />
+            <span className="text-sm">
+              {new Date().toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </span>
+          </div>
+
+          {/* Seletor de Treino */}
+          <section>
+            <h2 className="text-lg font-semibold text-white mb-4">
+              ⚡ Selecione seu treino de hoje
+            </h2>
+            <WorkoutSelector
+              selectedWorkout={selectedWorkout}
+              onSelectWorkout={handleSelectWorkout}
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </section>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <EnergyCard workout={selectedWorkout} />
+            <NutritionCard workout={selectedWorkout} />
+            <VibeCard workout={selectedWorkout} />
+            <ProgressCard
+              currentWorkout={selectedWorkout}
+              weeklyProgress={weeklyProgress}
+              onToggleDay={handleToggleDay}
+            />
+          </div>
+
+          {/* Ações e Resumo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Resumo do Dia */}
+            <div className="bg-gradient-to-r from-zinc-900/50 to-zinc-800/50 rounded-xl border border-white/10 p-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-full bg-gradient-to-br from-orange-500/20 to-red-500/20">
+                  <span className="text-2xl">{workoutConfig[selectedWorkout].vibe.icon}</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-zinc-400">Fuel & Flow do Dia</h3>
+                  <p className="text-lg text-white">
+                    {workoutConfig[selectedWorkout].name} • {workoutConfig[selectedWorkout].energyLabel}
+                  </p>
+                  <p className="text-sm text-zinc-400">
+                    {workoutConfig[selectedWorkout].vibe.genre}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão de ação */}
+            <div className="bg-zinc-900/50 rounded-xl border border-white/10 p-6 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-zinc-400">Progresso</h3>
+                <p className="text-2xl font-bold text-white">
+                  {weeklyProgress.filter(d => d.completed).length}/7
+                </p>
+              </div>
+              <button
+                onClick={handleResetWeek}
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-all border border-red-500/20 hover:border-red-500/40"
+              >
+                Resetar Semana
+              </button>
+            </div>
+          </div>
+
+          {/* Dica do dia */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
+            <p className="text-sm text-blue-400">
+              💡 Dica: Clique nos círculos do progresso semanal para marcar seus treinos como concluídos!
+            </p>
+          </div>
         </div>
       </main>
     </div>
