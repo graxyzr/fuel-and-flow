@@ -31,7 +31,7 @@
 
 1. **Clone o repositório**
    ```bash
-   git clone https://github.com/seu-usuario/fuel-and-flow.git
+   git clone https://github.com/graxyzr/fuel-and-flow.git
    cd fuel-and-flow
    ```
 
